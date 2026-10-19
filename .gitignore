@@ -1,0 +1,5 @@
+   # Never commit logs or results - they can contain usernames and temporary passwords
+   logs/
+   reports/
+   *.log
+   password-resets_*.csv
