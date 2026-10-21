@@ -125,11 +125,18 @@ function Invoke-Onboarding {
     $upn      = "$sam@$Domain"
     $ou       = "OU=$($Hire.Department),$BaseOU"
     $display  = "$($Hire.FirstName) $($Hire.LastName)"
+    # Two people with the same name can't share an object name in one OU (e.g. two "Jane Doe" in IT).
+    # If the name is taken, add the username so it stays unique: "Jane Doe (jdoe2)".
+    $cn = $display
+    try {
+        Get-ADObject -Identity "CN=$($display -replace ',', '\,'),$ou" -ErrorAction Stop | Out-Null
+        $cn = "$display ($sam)"
+    } catch { }
     $password = New-TempPassword
     $homePath = Join-Path $HomeShareRoot $sam
 
     $userParams = @{
-        Name                  = $display
+        Name                  = $cn
         GivenName             = $Hire.FirstName
         Surname               = $Hire.LastName
         DisplayName           = $display
@@ -190,7 +197,7 @@ function Invoke-Onboarding {
         Username     = $sam
         Email        = $upn
         Department   = $Hire.Department
-        TempPassword = $password
+        TempPassword = if ($WhatIfPreference) { '(preview only)' } else { $password }
     }
 }
 
