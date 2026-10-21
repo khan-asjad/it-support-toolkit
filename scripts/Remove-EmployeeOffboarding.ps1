@@ -31,21 +31,21 @@ param(
     [Parameter(Mandatory)][string]$TicketNumber
 )
 
+Import-Module ActiveDirectory -ErrorAction Stop
+
 # ---------- Configuration ----------
-$DisabledOU   = 'OU=Disabled Users,DC=lab,DC=local'
+$DisabledOU   = "OU=Disabled Users,$((Get-ADDomain).DistinguishedName)"   # detected automatically
 $LogFile      = Join-Path $PSScriptRoot '..\logs\offboarding.log'
 $ArchiveDir   = Join-Path $PSScriptRoot '..\logs\group-archive'
 $KeepGroups   = @('Domain Users')   # primary group cannot be removed
 # -----------------------------------
 
-Import-Module ActiveDirectory -ErrorAction Stop
-
 function Write-Log {
     param([string]$Message, [ValidateSet('INFO', 'WARN', 'ERROR')][string]$Level = 'INFO')
     $line = '{0} [{1}] [{2}] {3}' -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Level, $TicketNumber, $Message
     $dir = Split-Path $LogFile -Parent
-    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
-    Add-Content -Path $LogFile -Value $line
+    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force -WhatIf:$false | Out-Null }
+    Add-Content -Path $LogFile -Value $line -WhatIf:$false
     Write-Host $line
 }
 
@@ -71,9 +71,9 @@ if ($PSCmdlet.ShouldProcess($Username, 'Reset password to random value')) {
 # 3. Archive and remove group memberships
 $groups = $user.MemberOf | ForEach-Object { Get-ADGroup $_ } | Where-Object { $KeepGroups -notcontains $_.Name }
 if ($groups) {
-    if (-not (Test-Path $ArchiveDir)) { New-Item -ItemType Directory -Path $ArchiveDir -Force | Out-Null }
+    if (-not (Test-Path $ArchiveDir)) { New-Item -ItemType Directory -Path $ArchiveDir -Force -WhatIf:$false | Out-Null }
     $archive = Join-Path $ArchiveDir ("{0}_{1}.csv" -f $Username, (Get-Date -Format 'yyyyMMdd'))
-    $groups | Select-Object Name, DistinguishedName | Export-Csv $archive -NoTypeInformation
+    $groups | Select-Object Name, DistinguishedName | Export-Csv $archive -NoTypeInformation -WhatIf:$false
     Write-Log "Saved $(@($groups).Count) group membership(s) to $archive"
 
     foreach ($g in $groups) {

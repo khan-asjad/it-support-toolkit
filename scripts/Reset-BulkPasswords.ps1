@@ -66,7 +66,7 @@ $results = foreach ($row in Import-Csv $CsvPath) {
 }
 
 $dir = Split-Path $OutputPath -Parent
-if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
-$results | Export-Csv $OutputPath -NoTypeInformation
+if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force -WhatIf:$false | Out-Null }
+$results | Export-Csv $OutputPath -NoTypeInformation -WhatIf:$false
 $results | Select-Object Username, Status, WasLocked | Format-Table -AutoSize
 Write-Host "`nResults saved to $OutputPath (contains passwords - handle securely)." -ForegroundColor Yellow

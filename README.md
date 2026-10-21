@@ -2,7 +2,7 @@
 
 PowerShell scripts that automate the most repetitive help desk and desktop support tasks: onboarding new hires, offboarding departing employees, bulk password resets, and workstation health checks.
 
-Designed for an Active Directory home lab (`lab.local`, Windows Server 2022 domain controller + Windows 11 clients).
+Designed for an Active Directory home lab (`meridian.local`, Windows Server 2022 domain controller + domain-joined clients).
 <!-- After you run these in your lab, change the line above to "Built and tested in my AD home lab" and add screenshots below. -->
 
 
@@ -49,7 +49,7 @@ Requirements: Windows PowerShell 5.1 or PowerShell 7, and the ActiveDirectory mo
 .\scripts\Get-SystemHealthReport.ps1 -ComputerName WS01, WS02
 ```
 
-Edit the configuration block at the top of each script (domain, OUs, file share, department groups) to match your environment.
+The scripts detect the domain automatically. They expect an `Employees` OU with department sub-OUs, a `Disabled Users` OU, the `GG-*` security groups, and a hidden `Home$` share on the domain controller. Edit the department-to-group map at the top of the onboarding script to match your organization.
 
 ## Screenshots
 

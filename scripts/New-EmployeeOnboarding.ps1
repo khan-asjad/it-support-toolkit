@@ -36,7 +36,7 @@
 
 .NOTES
     Requires the ActiveDirectory module (RSAT) and rights to create users.
-    Built for a home lab domain: lab.local
+    Built for the home lab domain: meridian.local
 #>
 [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Single')]
 param(
@@ -48,10 +48,15 @@ param(
     [Parameter(Mandatory, ParameterSetName = 'Bulk')][string]$CsvPath
 )
 
-# ---------- Configuration (edit for your environment) ----------
-$Domain        = 'lab.local'
-$BaseOU        = 'OU=Employees,DC=lab,DC=local'
-$HomeShareRoot = '\\FS01\Home$'
+Import-Module ActiveDirectory -ErrorAction Stop
+
+# ---------- Configuration ----------
+# Domain details are detected automatically, so the script runs in any domain unchanged.
+$ADDomain      = Get-ADDomain
+$Domain        = $ADDomain.DNSRoot                                  # e.g. meridian.local
+$NetBIOS       = $ADDomain.NetBIOSName                              # e.g. MERIDIAN
+$BaseOU        = "OU=Employees,$($ADDomain.DistinguishedName)"
+$HomeShareRoot = "\\$($ADDomain.PDCEmulator)\Home$"                 # hidden share on the DC
 $LogFile       = Join-Path $PSScriptRoot '..\logs\onboarding.log'
 
 # Department -> security groups every new hire in that department receives
@@ -61,16 +66,14 @@ $DepartmentMap = @{
     'Finance'    = @('GG-Finance-Staff', 'GG-All-Staff')
     'Operations' = @('GG-Ops-Staff', 'GG-All-Staff')
 }
-# ---------------------------------------------------------------
-
-Import-Module ActiveDirectory -ErrorAction Stop
+# -----------------------------------
 
 function Write-Log {
     param([string]$Message, [ValidateSet('INFO', 'WARN', 'ERROR')][string]$Level = 'INFO')
     $line = '{0} [{1}] {2}' -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Level, $Message
     $dir = Split-Path $LogFile -Parent
-    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
-    Add-Content -Path $LogFile -Value $line
+    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force -WhatIf:$false | Out-Null }
+    Add-Content -Path $LogFile -Value $line -WhatIf:$false
     switch ($Level) {
         'ERROR' { Write-Host $line -ForegroundColor Red }
         'WARN'  { Write-Host $line -ForegroundColor Yellow }
@@ -173,7 +176,7 @@ function Invoke-Onboarding {
             New-Item -ItemType Directory -Path $homePath -Force -ErrorAction Stop | Out-Null
             $acl  = Get-Acl $homePath
             $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
-                "$($Domain.Split('.')[0])\$sam", 'Modify', 'ContainerInherit,ObjectInherit', 'None', 'Allow')
+                "$NetBIOS\$sam", 'Modify', 'ContainerInherit,ObjectInherit', 'None', 'Allow')
             $acl.AddAccessRule($rule)
             Set-Acl -Path $homePath -AclObject $acl
             Write-Log "Created home folder $homePath"
