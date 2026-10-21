@@ -57,7 +57,7 @@ $Domain        = $ADDomain.DNSRoot                                  # e.g. merid
 $NetBIOS       = $ADDomain.NetBIOSName                              # e.g. MERIDIAN
 $BaseOU        = "OU=Employees,$($ADDomain.DistinguishedName)"
 $HomeShareRoot = "\\$($ADDomain.PDCEmulator)\Home$"                 # hidden share on the DC
-$LogFile       = Join-Path $PSScriptRoot '..\logs\onboarding.log'
+$LogFile       = Join-Path (Split-Path $PSScriptRoot -Parent) 'logs\onboarding.log'
 
 # Department -> security groups every new hire in that department receives
 $DepartmentMap = @{

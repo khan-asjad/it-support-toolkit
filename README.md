@@ -2,8 +2,7 @@
 
 PowerShell scripts that automate the most repetitive help desk and desktop support tasks: onboarding new hires, offboarding departing employees, bulk password resets, and workstation health checks.
 
-Designed for an Active Directory home lab (`meridian.local`, Windows Server 2022 domain controller + domain-joined clients).
-<!-- After you run these in your lab, change the line above to "Built and tested in my AD home lab" and add screenshots below. -->
+**Built and tested in my Active Directory home lab** (`meridian.local`, Windows Server 2022 domain controller in VirtualBox), where I also set up the OU structure, security groups and hidden home-folder share these scripts rely on.
 
 
 ## Why I built this
@@ -25,7 +24,8 @@ In my current role I manage devices for close to 100 employees and train staff o
 - **Disable, never delete** on offboarding. Accounts stay recoverable and group memberships are archived to CSV.
 - **Audit logging** of every action to `logs/`, tagged with the ticket number for offboarding.
 - **Temporary passwords are never written to the log.** They are shown once (onboarding) or saved to a results file marked sensitive (bulk reset).
-- **Unique usernames.** If `jdoe` exists, the next hire becomes `jdoe2`.
+- **Unique usernames and names.** If `jdoe` exists, the next hire becomes `jdoe2`, shown as "Jane Doe (jdoe2)" so two people with the same name can share a department.
+- **Keeps going on errors.** In a bulk run, one bad row is logged as an error and the rest of the hires are still processed.
 
 ## Usage
 
@@ -51,12 +51,45 @@ Requirements: Windows PowerShell 5.1 or PowerShell 7, and the ActiveDirectory mo
 
 The scripts detect the domain automatically. They expect an `Employees` OU with department sub-OUs, a `Disabled Users` OU, the `GG-*` security groups, and a hidden `Home$` share on the domain controller. Edit the department-to-group map at the top of the onboarding script to match your organization.
 
-## Screenshots
+## Lab setup
 
-<!-- Add after running in your lab -->
-- `screenshots/onboarding-whatif.png`: WhatIf preview of an onboarding run
-- `screenshots/onboarding-result.png`: new user in Active Directory Users and Computers
-- `screenshots/health-report.png`: the HTML health report
+| OU structure | Security groups |
+|---|---|
+| ![OU structure](screenshots/ad-ou-structure.png) | ![Security groups](screenshots/ad-groups.png) |
+
+## Results from the lab
+
+**1. Preview before changing anything (`-WhatIf`)**
+
+![Onboarding WhatIf preview](screenshots/onboarding-whatif.png)
+
+**2. Onboarding a new hire**
+
+![Onboarding result](screenshots/onboarding-result.png)
+![New user with group memberships](screenshots/ad-user-created.png)
+
+**3. Bulk onboarding from CSV.** The missing manager is logged as a warning and the run continues.
+
+![Bulk onboarding](screenshots/bulk-onboarding.png)
+
+**4. Offboarding with a ticket number.** The account is disabled, memberships archived and removed, and it is moved to Disabled Users.
+
+![Offboarding result](screenshots/offboarding-result.png)
+![Disabled Users OU](screenshots/disabled-users.png)
+
+**5. Bulk password reset**
+
+![Bulk password reset](screenshots/password-reset.png)
+
+**6. System health report**
+
+![Health report](screenshots/health-report.png)
+
+## Problems I solved along the way
+
+- **Duplicate names in one OU.** Bulk-onboarding a second "Jane Doe" failed because Active Directory requires unique object names inside an OU. The script logged the error and continued with the other hires; I then changed it to name the account "Jane Doe (jdoe2)" when the name is taken.
+- **Server activation on an isolated network.** The evaluation license expired, and online activation failed with error `0x80072EE7` (name could not be resolved). The lab network intentionally has no gateway, so I temporarily connected a second NAT adapter, activated, and disconnected it to keep the lab isolated.
+- **Portability.** The first version had the domain name hard-coded. The scripts now read the domain, NetBIOS name and domain controller from Active Directory, so they run in any domain unchanged.
 
 ## Skills demonstrated
 
@@ -64,4 +97,4 @@ Active Directory administration · PowerShell scripting · user lifecycle manage
 
 ## Author
 
-Asjad Khan, M.S. Computer Science · M.S. Cybersecurity candidate, Eastern Michigan University
+Asjad Khan · M.S. Cybersecurity candidate, Eastern Michigan University · [khan-asjad.github.io](https://khan-asjad.github.io)

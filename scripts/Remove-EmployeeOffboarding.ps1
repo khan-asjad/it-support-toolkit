@@ -35,8 +35,8 @@ Import-Module ActiveDirectory -ErrorAction Stop
 
 # ---------- Configuration ----------
 $DisabledOU   = "OU=Disabled Users,$((Get-ADDomain).DistinguishedName)"   # detected automatically
-$LogFile      = Join-Path $PSScriptRoot '..\logs\offboarding.log'
-$ArchiveDir   = Join-Path $PSScriptRoot '..\logs\group-archive'
+$LogFile      = Join-Path (Split-Path $PSScriptRoot -Parent) 'logs\offboarding.log'
+$ArchiveDir   = Join-Path (Split-Path $PSScriptRoot -Parent) 'logs\group-archive'
 $KeepGroups   = @('Domain Users')   # primary group cannot be removed
 # -----------------------------------
 

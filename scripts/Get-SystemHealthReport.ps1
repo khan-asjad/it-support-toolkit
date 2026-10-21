@@ -26,7 +26,7 @@
 [CmdletBinding()]
 param(
     [string[]]$ComputerName = $env:COMPUTERNAME,
-    [string]$OutputPath = (Join-Path $PSScriptRoot '..\reports')
+    [string]$OutputPath = (Join-Path (Split-Path $PSScriptRoot -Parent) 'reports')
 )
 
 # Thresholds - tweak to taste

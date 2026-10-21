@@ -24,7 +24,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory)][string]$CsvPath,
-    [string]$OutputPath = (Join-Path $PSScriptRoot ("..\logs\password-resets_{0}.csv" -f (Get-Date -Format 'yyyyMMdd_HHmm')))
+    [string]$OutputPath = (Join-Path (Split-Path $PSScriptRoot -Parent) ("logs\password-resets_{0}.csv" -f (Get-Date -Format 'yyyyMMdd_HHmm')))
 )
 
 Import-Module ActiveDirectory -ErrorAction Stop
